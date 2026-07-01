@@ -1,0 +1,49 @@
+@startuml
+title Clases principales
+
+class Gestion {
+  fecha_gestion
+  dni
+  telefono
+  status
+  tipificacion
+  observacion
+  fecha_pago
+  monto_pago
+  nombre
+}
+
+class LimpiadorService {
+  limpiar_dataframe(df)
+  limpiar_dni(dni)
+  limpiar_telefono(telefono)
+}
+
+class HomologadorService {
+  homologar_dataframe(df)
+  homologar_status(status)
+  homologar_tipificacion(tipificacion)
+}
+
+class ValidadorService {
+  validar_columnas(df)
+  eliminar_duplicados(df)
+}
+
+class ReporteService {
+  exportar_excel(df, ruta_salida)
+  crear_resumen(...)
+}
+
+class GestionRepository {
+  guardar_gestiones(df)
+}
+
+GestionRepository ..> Gestion
+LimpiadorService ..> Gestion
+HomologadorService ..> Gestion
+ValidadorService ..> Gestion
+ReporteService ..> Gestion
+
+@enduml
+

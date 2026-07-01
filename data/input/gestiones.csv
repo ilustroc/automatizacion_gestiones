@@ -1,0 +1,9 @@
+fecha_gestion,dni,telefono,status,tipificacion,observacion,fecha_pago,monto_pago,nombre
+01/06/2026 09:15,12345678,987654321,DIRECTO,PDP, Cliente acepta pagar el viernes ,05/06/2026,150.50, Juan Perez
+01/06/2026 09:15,12345678,987654321,CD,PROMESA DE PAGO,Cliente acepta pagar el viernes,05/06/2026,150.50,Juan Perez
+01/06/2026 10:30,87654321,999-888-777,CI,MSJ, Se dejo mensaje con familiar ,,,
+02/06/2026 11:00,DNI 45678912,(01)5554444,NC,NO CONTESTÓ, telefono sin respuesta ,, Maria Lopez
+02/06/2026 12:45,45678912,015554444,NO CONTACTO,NO CONTESTA,telefono sin respuesta,,,
+03/06/2026 14:20,74185296,912345678,ILOCALIZADO,NUMERO INCORRECTO, numero no pertenece al titular ,, Carlos Ruiz
+03/06/2026 16:05,85296374,923456789,CONTACTO DIRECTO,YA PAGO, Cliente indica que ya pago ,03/06/2026,300,Ana Torres
+

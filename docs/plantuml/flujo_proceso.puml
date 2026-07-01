@@ -1,0 +1,17 @@
+@startuml
+title Flujo del proceso de gestiones
+
+start
+:CSV de entrada;
+:Lectura con pandas;
+:Validacion de columnas;
+:Limpieza de campos;
+:Homologacion de status y tipificacion;
+:Eliminacion de duplicados;
+:Exportacion a Excel;
+:Resumen en consola;
+:Registro en logs;
+stop
+
+@enduml
+
