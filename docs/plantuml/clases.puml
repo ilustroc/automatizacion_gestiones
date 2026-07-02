@@ -1,5 +1,5 @@
 @startuml
-title Clases principales
+title Diagrama de clases - Automatizacion de gestiones
 
 class Gestion {
   fecha_gestion
@@ -11,6 +11,15 @@ class Gestion {
   fecha_pago
   monto_pago
   nombre
+  clave_unica
+  generar_clave_unica()
+}
+
+class DescargadorService {
+  gestion_repository
+  obtener_desde_base_datos(consulta_sql)
+  ejecutar_stored_procedure(nombre_sp)
+  leer_csv(ruta_entrada)
 }
 
 class LimpiadorService {
@@ -27,23 +36,36 @@ class HomologadorService {
 
 class ValidadorService {
   validar_columnas(df)
+  obtener_registros_validos(df)
   eliminar_duplicados(df)
-}
-
-class ReporteService {
-  exportar_excel(df, ruta_salida)
-  crear_resumen(...)
+  agregar_clave_unica(df)
 }
 
 class GestionRepository {
-  guardar_gestiones(df)
+  obtener_gestiones_origen(consulta_sql)
+  insertar_gestiones(gestiones, id_carga)
+  existe_clave_unica(clave_unica)
 }
 
-GestionRepository ..> Gestion
+class ReporteService {
+  obtener_resumen_desde_bd()
+  formatear_resumen_bd(resumen)
+  exportar_excel(df, ruta_salida)
+}
+
+class NotificacionService {
+  enviar_reporte(ruta_reporte, destinatarios)
+  registrar_intento_envio(id_reporte, id_destinatario)
+}
+
+DescargadorService --> GestionRepository
+DescargadorService ..> Gestion
 LimpiadorService ..> Gestion
 HomologadorService ..> Gestion
 ValidadorService ..> Gestion
-ReporteService ..> Gestion
+GestionRepository ..> Gestion
+ReporteService ..> GestionRepository
+NotificacionService ..> ReporteService
 
 @enduml
 

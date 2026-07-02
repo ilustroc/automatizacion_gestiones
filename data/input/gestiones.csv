@@ -6,4 +6,3 @@ fecha_gestion,dni,telefono,status,tipificacion,observacion,fecha_pago,monto_pago
 02/06/2026 12:45,45678912,015554444,NO CONTACTO,NO CONTESTA,telefono sin respuesta,,,
 03/06/2026 14:20,74185296,912345678,ILOCALIZADO,NUMERO INCORRECTO, numero no pertenece al titular ,, Carlos Ruiz
 03/06/2026 16:05,85296374,923456789,CONTACTO DIRECTO,YA PAGO, Cliente indica que ya pago ,03/06/2026,300,Ana Torres
-

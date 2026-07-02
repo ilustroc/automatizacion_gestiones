@@ -1,16 +1,21 @@
 @startuml
-title Flujo del proceso de gestiones
+title Flujo automatizado con PostgreSQL/Supabase
 
 start
-:CSV de entrada;
-:Lectura con pandas;
-:Validacion de columnas;
-:Limpieza de campos;
-:Homologacion de status y tipificacion;
-:Eliminacion de duplicados;
-:Exportacion a Excel;
-:Resumen en consola;
-:Registro en logs;
+:Cargar variables .env;
+:Conectar a PostgreSQL/Supabase;
+:Crear carga en cargas_gestiones\nestado INICIADO;
+:Obtener gestiones desde consulta SQL\no futuro Stored Procedure;
+:Limpiar DNI, telefono, textos,\nfechas y montos;
+:Homologar status y tipificacion;
+:Validar campos obligatorios;
+:Generar clave_unica;
+:Eliminar duplicados del lote;
+:Insertar en gestiones\nON CONFLICT DO NOTHING;
+:Actualizar cargas_gestiones\nestado FINALIZADO o ERROR;
+:Registrar eventos en logs_proceso;
+:Consultar vw_resumen_gestiones;
+:Mostrar resumen en consola;
 stop
 
 @enduml

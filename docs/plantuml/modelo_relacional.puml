@@ -1,0 +1,105 @@
+@startuml
+title Modelo relacional - PostgreSQL/Supabase
+
+entity empresas {
+  * id_empresa : BIGSERIAL
+  --
+  nombre_empresa : VARCHAR
+  ruc : VARCHAR
+  estado : VARCHAR
+}
+
+entity usuarios {
+  * id_usuario : BIGSERIAL
+  --
+  nombre : VARCHAR
+  correo : VARCHAR
+  rol : VARCHAR
+}
+
+entity carteras {
+  * id_cartera : BIGSERIAL
+  --
+  id_empresa : BIGINT
+  nombre_cartera : VARCHAR
+}
+
+entity cargas_gestiones {
+  * id_carga : BIGSERIAL
+  --
+  periodo_desde : DATE
+  periodo_hasta : DATE
+  origen : VARCHAR
+  registros_descargados : INT
+  registros_insertados : INT
+  registros_duplicados : INT
+  estado : VARCHAR
+}
+
+entity gestiones {
+  * id_gestion : BIGSERIAL
+  --
+  id_carga : BIGINT
+  id_cartera : BIGINT
+  id_usuario : BIGINT
+  fecha_gestion : TIMESTAMP
+  dni : VARCHAR
+  telefono : VARCHAR
+  status : VARCHAR
+  tipificacion : VARCHAR
+  clave_unica : VARCHAR
+}
+
+entity reportes {
+  * id_reporte : BIGSERIAL
+  --
+  tipo_reporte : VARCHAR
+  periodo_desde : DATE
+  periodo_hasta : DATE
+}
+
+entity destinatarios_reportes {
+  * id_destinatario : BIGSERIAL
+  --
+  id_empresa : BIGINT
+  nombre : VARCHAR
+  correo : VARCHAR
+}
+
+entity envios_reportes {
+  * id_envio : BIGSERIAL
+  --
+  id_reporte : BIGINT
+  id_destinatario : BIGINT
+  estado_envio : VARCHAR
+}
+
+entity logs_proceso {
+  * id_log : BIGSERIAL
+  --
+  id_carga : BIGINT
+  nivel : VARCHAR
+  mensaje : TEXT
+}
+
+entity vw_resumen_gestiones {
+  fecha
+  status
+  tipificacion
+  total_gestiones
+  clientes_unicos
+  monto_total
+}
+
+empresas ||--o{ carteras
+empresas ||--o{ destinatarios_reportes
+carteras ||--o{ gestiones
+usuarios ||--o{ gestiones
+cargas_gestiones ||--o{ gestiones
+cargas_gestiones ||--o{ logs_proceso
+reportes ||--o{ envios_reportes
+destinatarios_reportes ||--o{ envios_reportes
+gestiones ..> vw_resumen_gestiones
+
+@enduml
+

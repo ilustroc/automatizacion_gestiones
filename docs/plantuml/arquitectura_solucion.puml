@@ -1,0 +1,55 @@
+@startuml
+title Arquitectura por capas
+
+actor "Usuario final / Analista" as Analista
+database "Supabase / PostgreSQL" as DB
+
+package "Capa repositories" {
+  [Database]
+  [GestionRepository]
+  [CargaGestionRepository]
+  [ReporteRepository]
+  [LogProcesoRepository]
+}
+
+package "Capa services" {
+  [DescargadorService]
+  [LimpiadorService]
+  [HomologadorService]
+  [ValidadorService]
+  [ReporteService]
+  [NotificacionService]
+}
+
+package "Capa models" {
+  [Gestion]
+}
+
+package "Capa reportes" {
+  [vw_resumen_gestiones]
+  [Resumen en consola]
+}
+
+package "Capa logs" {
+  [logs_proceso]
+  [logs/proceso.log]
+}
+
+Analista --> [run.py]
+[run.py] --> [DescargadorService]
+[DescargadorService] --> [GestionRepository]
+[LimpiadorService] --> [Gestion]
+[HomologadorService] --> [Gestion]
+[ValidadorService] --> [Gestion]
+[GestionRepository] --> DB
+[CargaGestionRepository] --> DB
+[ReporteRepository] --> DB
+[LogProcesoRepository] --> DB
+[ReporteService] --> [vw_resumen_gestiones]
+[vw_resumen_gestiones] --> DB
+[ReporteService] --> [Resumen en consola]
+[LogProcesoRepository] --> [logs_proceso]
+[logs_proceso] --> DB
+
+@enduml
+

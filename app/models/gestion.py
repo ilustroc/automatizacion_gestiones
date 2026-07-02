@@ -14,4 +14,8 @@ class Gestion:
     fecha_pago: datetime | None
     monto_pago: Decimal | None
     nombre: str
+    clave_unica: str | None = None
 
+    def generar_clave_unica(self) -> str:
+        fecha = self.fecha_gestion.strftime("%Y-%m-%d %H:%M:%S")
+        return f"{self.dni}|{self.telefono}|{fecha}|{self.status}|{self.tipificacion}"

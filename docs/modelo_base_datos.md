@@ -1,32 +1,47 @@
 # Modelo base de datos
 
-La base futura sera relacional y puede implementarse en PostgreSQL usando Supabase.
+La base de datos objetivo es PostgreSQL en Supabase, usando el schema `public`.
 
-## Tablas sugeridas
+## Tablas
 
-### empresas
+- `empresas`: empresas o clientes externos.
+- `usuarios`: usuarios internos.
+- `carteras`: carteras asociadas a empresas.
+- `cargas_gestiones`: ejecuciones del proceso.
+- `gestiones`: tabla central con gestiones limpias.
+- `reportes`: reportes generados.
+- `destinatarios_reportes`: destinatarios de reportes.
+- `envios_reportes`: intentos de envio.
+- `logs_proceso`: eventos del sistema.
+- `vw_resumen_gestiones`: vista de resumen operativo.
 
-Guarda informacion de las empresas o carteras gestionadas.
+## Tabla central
 
-### gestiones
+La tabla `gestiones` contiene:
 
-Guarda cada gestion limpia con sus datos operativos principales.
+- `id_gestion`
+- `id_carga`
+- `id_cartera`
+- `id_usuario`
+- `fecha_gestion`
+- `dni`
+- `telefono`
+- `status`
+- `tipificacion`
+- `observacion`
+- `fecha_pago`
+- `monto_pago`
+- `nombre`
+- `clave_unica`
+- `creado_en`
 
-### tipificaciones
+## Control de duplicados
 
-Catalogo de tipificaciones homologadas.
+La columna `clave_unica` se forma con:
 
-### ejecuciones
+```text
+dni|telefono|fecha_gestion|status|tipificacion
+```
 
-Registra cada ejecucion del proceso, cantidad de registros leidos, duplicados y archivo generado.
-
-### reportes_generados
-
-Registra los reportes creados y su estado de envio.
-
-## Relacion general
-
-- Una empresa tiene muchas gestiones.
-- Una tipificacion puede estar asociada a muchas gestiones.
-- Una ejecucion puede generar uno o mas reportes.
+La insercion usa `ON CONFLICT (clave_unica) DO NOTHING` para evitar duplicados.
 

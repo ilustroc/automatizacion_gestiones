@@ -13,6 +13,8 @@ class HomologadorService:
         "CI": "INDIRECTO",
         "NO CONTACTO": "NO CONTACTO",
         "NC": "NO CONTACTO",
+        "NO CONTESTA": "NO CONTACTO",
+        "NO CONTESTO": "NO CONTACTO",
         "ILOCALIZADO": "NO CONTACTO",
     }
 

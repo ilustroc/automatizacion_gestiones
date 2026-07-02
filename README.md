@@ -1,30 +1,40 @@
-# automatizacion-gestiones-cobranza
+# Automatizacion de gestiones de cobranza
 
-Proyecto en Python para automatizar la descarga, limpieza, homologacion, depuracion y reporte de gestiones de cobranza.
+Proyecto academico para el curso Lenguajes de Programacion. Automatiza el proceso de descarga, limpieza, homologacion, validacion, carga y reporte de gestiones de cobranza usando Python y PostgreSQL/Supabase.
 
 ## Problema que resuelve
 
-En procesos operativos de cobranza suelen recibirse archivos con datos repetidos, telefonos con formatos diferentes, estados escritos de varias formas y fechas inconsistentes. Este proyecto prepara esos datos para obtener un archivo limpio y dejar lista la estructura para futuras cargas a base de datos y envio de reportes.
+En una operacion de cobranzas como ESCALL PERU, las gestiones pueden prepararse manualmente antes de reportarse. Esto genera demoras, duplicados, errores de digitacion, tipificaciones no estandarizadas y poca trazabilidad.
 
-## Estructura del proyecto
+El sistema centraliza el flujo en la base de datos: registra cargas, procesa gestiones, evita duplicados, guarda logs y consulta reportes desde `vw_resumen_gestiones`.
+
+## Paradigma usado
+
+El proyecto usa programacion orientada a objetos. Las responsabilidades se separan en clases:
+
+- `Gestion`
+- `DescargadorService`
+- `LimpiadorService`
+- `HomologadorService`
+- `ValidadorService`
+- `GestionRepository`
+- `ReporteService`
+- `NotificacionService`
+
+Tambien se aplica organizacion modular por capas: `models`, `services`, `repositories`, `utils`, `docs` y `tests`.
+
+## Arquitectura
 
 ```text
-app/
-  main.py
-  config.py
-  models/
-  services/
-  repositories/
-  utils/
-data/
-  input/
-  output/
-docs/
-  plantuml/
-logs/
-tests/
-run.py
+Supabase/PostgreSQL
+-> repositories
+-> services
+-> models/utils
+-> reportes/logs
+-> usuario analista
 ```
+
+El CSV ya no es el flujo principal. Puede mantenerse como respaldo academico o archivo de ejemplo, pero la ejecucion principal usa PostgreSQL/Supabase.
 
 ## Instalacion
 
@@ -34,60 +44,99 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-## Como ejecutar
+## Configuracion del .env
+
+Crear un archivo `.env` en la raiz del proyecto tomando como base `.env.example`:
+
+```text
+DATABASE_HOST=
+DATABASE_PORT=5432
+DATABASE_NAME=
+DATABASE_USER=
+DATABASE_PASSWORD=
+DATABASE_SSLMODE=require
+DATABASE_SOURCE_QUERY=
+DATABASE_SOURCE_SP=
+```
+
+No subir credenciales reales a GitHub.
+
+`DATABASE_SOURCE_QUERY` permite definir la consulta que obtiene las gestiones de origen. En una fase futura puede reemplazarse por un Stored Procedure.
+
+## Ejecucion del sistema
 
 ```bash
 python run.py
 ```
 
-El proceso lee `data/input/gestiones.csv` y genera `data/output/gestiones_limpias.xlsx`.
+Flujo principal:
 
-## Campos usados
+1. Cargar configuracion desde `.env`.
+2. Conectarse a PostgreSQL/Supabase.
+3. Crear registro en `cargas_gestiones`.
+4. Obtener gestiones desde base de datos.
+5. Limpiar campos.
+6. Homologar status y tipificacion.
+7. Validar campos obligatorios.
+8. Generar `clave_unica`.
+9. Insertar registros no duplicados en `gestiones`.
+10. Actualizar la carga.
+11. Registrar logs en `logs_proceso`.
+12. Mostrar resumen desde `vw_resumen_gestiones`.
 
-- `fecha_gestion`
-- `dni`
-- `telefono`
-- `status`
-- `tipificacion`
-- `observacion`
-- `fecha_pago`
-- `monto_pago`
-- `nombre`
+## Ejecucion de pruebas
 
-## Flujo del proceso
+```bash
+python -m pytest -q
+```
 
-1. Leer archivo CSV.
-2. Validar columnas requeridas.
-3. Limpiar DNI, telefono, textos, fechas y montos.
-4. Homologar status y tipificacion.
-5. Eliminar duplicados usando una clave compuesta.
-6. Exportar el resultado a Excel.
-7. Registrar resumen y logs basicos.
+Las pruebas no dependen de Supabase real. La insercion en base de datos se simula con mocks/fakes.
 
-## Explicacion de carpetas
+## Base de datos
 
-- `app/models`: clases principales del sistema.
-- `app/services`: logica de negocio para limpieza, homologacion, validacion y reportes.
-- `app/repositories`: estructura preparada para carga futura a base de datos.
-- `app/utils`: funciones reutilizables para texto y fechas.
-- `data/input`: archivos de entrada.
-- `data/output`: archivos generados.
-- `docs`: documentacion tecnica y diagramas.
-- `logs`: archivo de log de ejecucion.
-- `tests`: pruebas basicas del proyecto.
+El script SQL se encuentra en:
 
-## Reglas principales
+```text
+docs/schema.sql
+```
 
-- `dni` y `telefono` quedan solo con numeros.
-- `status` y `tipificacion` se convierten a mayusculas y se homologan.
-- `ILOCALIZADO` en status se considera `NO CONTACTO`, porque no hubo contacto efectivo.
-- Los duplicados se eliminan con la clave: `dni + telefono + fecha_gestion + status + tipificacion`.
+Tablas principales:
 
-## Proximas mejoras
+- `empresas`
+- `usuarios`
+- `carteras`
+- `cargas_gestiones`
+- `gestiones`
+- `reportes`
+- `destinatarios_reportes`
+- `envios_reportes`
+- `logs_proceso`
+- `vw_resumen_gestiones`
 
-- Cargar gestiones limpias en PostgreSQL/Supabase.
-- Registrar ejecuciones en base de datos.
-- Generar reportes por empresa o fecha.
-- Enviar reportes por correo.
-- Agregar validaciones adicionales de negocio.
+## Evidencias para presentacion
+
+Capturas recomendadas:
+
+- ejecucion de `python run.py`
+- configuracion `.env` sin mostrar contrasena
+- tablas creadas en Supabase
+- registros en `cargas_gestiones`
+- registros en `gestiones`
+- logs en `logs_proceso`
+- consulta de `vw_resumen_gestiones`
+- pruebas aprobadas con `python -m pytest -q`
+
+## Documentacion
+
+- `docs/paradigma_programacion.md`
+- `docs/contexto_empresarial.md`
+- `docs/objetivos.md`
+- `docs/proceso_automatizar.md`
+- `docs/modelo_logico.md`
+- `docs/modelo_fisico_base_datos.md`
+- `docs/codigo_fuente.md`
+- `docs/presentacion_automatizacion.md`
+- `docs/conclusiones_recomendaciones.md`
+- `docs/guia_exposicion.md`
+- `docs/schema.sql`
 

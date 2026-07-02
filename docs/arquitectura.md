@@ -1,31 +1,53 @@
 # Arquitectura
 
-El proyecto usa una arquitectura sencilla por capas. La idea es separar responsabilidades sin crear una estructura dificil de explicar.
+El proyecto usa una arquitectura modular por capas. La fuente y destino principal es PostgreSQL/Supabase.
 
 ## Capas
 
 ### Models
 
-Contiene las clases principales del sistema. En esta primera version se incluye la clase `Gestion`.
+Contiene entidades del dominio. La clase principal es `Gestion`.
 
 ### Services
 
 Contiene la logica de negocio:
 
-- `LimpiadorService`: limpia datos operativos.
-- `HomologadorService`: convierte status y tipificaciones a valores estandar.
-- `ValidadorService`: valida columnas y elimina duplicados.
-- `ReporteService`: genera el archivo Excel y el resumen del proceso.
+- `DescargadorService`: obtiene registros desde base de datos o futuro Stored Procedure.
+- `LimpiadorService`: limpia campos operativos.
+- `HomologadorService`: estandariza status y tipificaciones.
+- `ValidadorService`: valida obligatorios, elimina duplicados y genera `clave_unica`.
+- `ReporteService`: consulta y formatea el resumen desde `vw_resumen_gestiones`.
+- `NotificacionService`: deja preparado el envio futuro de reportes.
 
 ### Repositories
 
-Contiene una clase base para futura persistencia en PostgreSQL/Supabase. En esta version no se conecta a una base real.
+Contiene el acceso a PostgreSQL/Supabase:
+
+- `EmpresaRepository`
+- `UsuarioRepository`
+- `CarteraRepository`
+- `CargaGestionRepository`
+- `GestionRepository`
+- `ReporteRepository`
+- `LogProcesoRepository`
 
 ### Utils
 
-Contiene funciones pequenas reutilizables para texto, numeros y fechas.
+Funciones reutilizables para texto y fechas.
 
-## Decision sobre ILOCALIZADO
+## Flujo
 
-Cuando `ILOCALIZADO` aparece como status se homologa a `NO CONTACTO`, porque representa que no se logro contactar ni ubicar al cliente. Cuando aparece como tipificacion, se conserva como `ILOCALIZADO`.
+1. `run.py` inicia el proceso.
+2. Se carga `.env`.
+3. Se conecta a Supabase.
+4. Se crea una carga en `cargas_gestiones`.
+5. Se obtienen gestiones desde una consulta SQL.
+6. Se limpian, homologan y validan los datos.
+7. Se insertan gestiones no duplicadas.
+8. Se registran logs.
+9. Se muestra el resumen desde `vw_resumen_gestiones`.
+
+## Nota sobre CSV
+
+El CSV queda solo como respaldo academico o ejemplo. No es el flujo principal.
 

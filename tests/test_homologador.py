@@ -17,6 +17,14 @@ def test_homologacion_status_ilocalizado():
     assert resultado == "NO CONTACTO"
 
 
+def test_homologacion_status_no_contesta():
+    homologador = HomologadorService()
+
+    resultado = homologador.homologar_status("NO CONTESTA")
+
+    assert resultado == "NO CONTACTO"
+
+
 def test_homologacion_tipificacion_promesa():
     homologador = HomologadorService()
 

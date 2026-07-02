@@ -5,8 +5,14 @@ from app.utils.text_utils import limpiar_espacios, solo_numeros
 
 
 class LimpiadorService:
+    COLUMNAS_OPCIONALES = ["telefono", "observacion", "fecha_pago", "monto_pago", "nombre"]
+
     def limpiar_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
         df_limpio = df.copy()
+
+        for columna in self.COLUMNAS_OPCIONALES:
+            if columna not in df_limpio.columns:
+                df_limpio[columna] = None
 
         df_limpio["dni"] = df_limpio["dni"].apply(self.limpiar_dni)
         df_limpio["telefono"] = df_limpio["telefono"].apply(self.limpiar_telefono)
@@ -25,4 +31,3 @@ class LimpiadorService:
 
     def limpiar_telefono(self, telefono: object) -> str:
         return solo_numeros(telefono)
-
