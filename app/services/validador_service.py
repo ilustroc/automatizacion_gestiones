@@ -1,62 +1,67 @@
+import hashlib
+
 import pandas as pd
+
+from app.exceptions import ValidacionGestionError
 
 
 class ValidadorService:
     CAMPOS_REQUERIDOS = [
+        "id_gestion_origen",
         "fecha_gestion",
         "dni",
-        "status",
-        "tipificacion",
-    ]
-
-    CLAVE_DUPLICADOS = [
-        "dni",
-        "telefono",
-        "fecha_gestion",
-        "status",
-        "tipificacion",
+        "status_homologado",
+        "tipificacion_homologada",
     ]
 
     def validar_columnas(self, df: pd.DataFrame) -> None:
-        columnas_faltantes = [
-            columna for columna in self.CAMPOS_REQUERIDOS if columna not in df.columns
-        ]
-        if columnas_faltantes:
-            faltantes = ", ".join(columnas_faltantes)
-            raise ValueError(f"Faltan columnas requeridas: {faltantes}")
+        faltantes = [columna for columna in self.CAMPOS_REQUERIDOS if columna not in df]
+        if faltantes:
+            raise ValidacionGestionError(
+                "Faltan columnas requeridas: " + ", ".join(faltantes)
+            )
 
     def obtener_registros_validos(self, df: pd.DataFrame) -> tuple[pd.DataFrame, int]:
         self.validar_columnas(df)
-        total_antes = len(df)
-        mascara_validos = df[self.CAMPOS_REQUERIDOS].notna().all(axis=1)
-
+        mascara = df[self.CAMPOS_REQUERIDOS].notna().all(axis=1)
         for columna in self.CAMPOS_REQUERIDOS:
-            mascara_validos = mascara_validos & (df[columna].astype(str).str.strip() != "")
-
-        df_validos = df[mascara_validos].copy()
-        descartados = total_antes - len(df_validos)
-        return df_validos, descartados
-
-    def eliminar_duplicados(self, df: pd.DataFrame) -> tuple[pd.DataFrame, int]:
-        total_antes = len(df)
-        df_sin_duplicados = df.drop_duplicates(subset=self.CLAVE_DUPLICADOS).copy()
-        duplicados = total_antes - len(df_sin_duplicados)
-        return df_sin_duplicados, duplicados
+            mascara &= df[columna].astype(str).str.strip().ne("")
+        mascara &= pd.to_numeric(df["id_gestion_origen"], errors="coerce").gt(0)
+        validos = df[mascara].copy()
+        return validos, len(df) - len(validos)
 
     def agregar_clave_unica(self, df: pd.DataFrame) -> pd.DataFrame:
-        df_con_clave = df.copy()
-        fechas = df_con_clave["fecha_gestion"].dt.strftime("%Y-%m-%d %H:%M:%S")
-
-        df_con_clave["clave_unica"] = (
-            df_con_clave["dni"].astype(str)
-            + "|"
-            + df_con_clave["telefono"].astype(str)
-            + "|"
-            + fechas.astype(str)
-            + "|"
-            + df_con_clave["status"].astype(str)
-            + "|"
-            + df_con_clave["tipificacion"].astype(str)
+        resultado = df.copy()
+        resultado["clave_unica"] = resultado.apply(
+            lambda fila: self.generar_clave_unica(
+                dni=fila["dni"],
+                telefono=fila.get("telefono"),
+                fecha_gestion=fila["fecha_gestion"],
+                status_homologado=fila["status_homologado"],
+                tipificacion_homologada=fila["tipificacion_homologada"],
+            ),
+            axis=1,
         )
+        return resultado
 
-        return df_con_clave
+    def eliminar_duplicados(self, df: pd.DataFrame) -> tuple[pd.DataFrame, int]:
+        if "clave_unica" not in df.columns:
+            df = self.agregar_clave_unica(df)
+        resultado = df.drop_duplicates(subset=["clave_unica"]).copy()
+        return resultado, len(df) - len(resultado)
+
+    @staticmethod
+    def generar_clave_unica(
+        dni: object,
+        telefono: object,
+        fecha_gestion: object,
+        status_homologado: object,
+        tipificacion_homologada: object,
+    ) -> str:
+        fecha = pd.Timestamp(fecha_gestion).strftime("%Y-%m-%d %H:%M:%S")
+        telefono_limpio = "" if telefono is None or pd.isna(telefono) else str(telefono)
+        base = (
+            f"{dni}|{telefono_limpio}|{fecha}|"
+            f"{status_homologado}|{tipificacion_homologada}"
+        )
+        return hashlib.sha256(base.encode("utf-8")).hexdigest()

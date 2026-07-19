@@ -1,19 +1,31 @@
-# Modelo logico
+# Modelo lógico
 
-El modelo logico se basa en clases simples. Cada clase representa una parte del proceso automatizado.
+El modelo lógico separa las entidades del dominio de las clases que ejecutan reglas y acceso a datos.
 
-| Clase | Objeto ejemplo | Atributos principales | Metodos principales |
+| Clase | Objeto representado | Atributos principales | Métodos principales |
 |---|---|---|---|
-| Gestion | `gestion` | fecha_gestion, dni, telefono, status, tipificacion, observacion, fecha_pago, monto_pago, nombre, clave_unica | generar_clave_unica() |
-| DescargadorService | `descargador` | gestion_repository | obtener_desde_base_datos(), ejecutar_stored_procedure(), leer_csv() |
-| LimpiadorService | `limpiador` | columnas opcionales | limpiar_dataframe(), limpiar_dni(), limpiar_telefono() |
-| HomologadorService | `homologador` | mapas de homologacion | homologar_dataframe(), homologar_status(), homologar_tipificacion() |
-| ValidadorService | `validador` | campos requeridos, clave de duplicados | validar_columnas(), obtener_registros_validos(), eliminar_duplicados(), agregar_clave_unica() |
-| GestionRepository | `gestion_repository` | db | obtener_gestiones_origen(), insertar_gestiones(), existe_clave_unica() |
-| ReporteService | `reporte_service` | reporte_repository | obtener_resumen_desde_bd(), formatear_resumen_bd(), exportar_excel() |
-| NotificacionService | `notificacion_service` | envio_repository | enviar_reporte(), registrar_intento_envio() |
+| `GestionOrigen` | Registro leído de ESCALL | id, fecha, DNI, teléfono, status, tipificación | Construcción tipada mediante `dataclass` |
+| `GestionProcesada` | Registro limpio local | originales, homologados, monto, asesor, hash | Representación para persistencia |
+| `ControlDescarga` | Ejecución por rango | fechas, tipo, estado, contadores | Estado del proceso |
+| `DatabaseConnection` | Sesión MySQL/MariaDB | config, connection | conectar, commit, rollback, ejecutar lote/SP |
+| `SourceGestionRepository` | Acceso de lectura a ESCALL | source_db | obtener por rango/lotes, contar, probar SP |
+| `GestionProcesadaRepository` | Persistencia local | target_db, batch_size | insertar lote, consultar rango, verificar hash |
+| `DescargadorService` | Descarga de origen | source repository | descargar por rango |
+| `LimpiadorService` | Normalización de datos | reglas de campos | limpiar DNI/teléfono/dataframe |
+| `HomologadorService` | Estandarización | mapas de reglas | homologar status/tipificación |
+| `ValidadorService` | Calidad y deduplicación | campos requeridos | validar, generar SHA-256, eliminar duplicados |
+| `ProcesadorGestionesService` | Caso de uso principal | repositorios y servicios | procesar control y gestionar transacción |
+| `ReportePromesasService` | Alerta del supervisor | repositorio local | consultar, HTML, Excel |
+| `ReporteImpulseService` | Reporte de empresa | repositorio local | resumir, detallar, HTML, Excel |
+| `ReporteGerenciaService` | Productividad | repositorio local | indicadores, ranking, HTML, Excel |
+| `NotificacionService` | Envío SMTP | configuración, repositorio | probar SMTP, enviar HTML/adjunto |
 
-## Relacion con POO
+Ejemplo de objetos en ejecución:
 
-El proyecto usa clases para agrupar responsabilidades. Los objetos se crean durante la ejecucion y colaboran entre si: los servicios procesan datos y los repositorios acceden a la base de datos.
+```python
+source_db = DatabaseConnection(source_config)
+target_db = DatabaseConnection(target_config)
+descargador = DescargadorService(SourceGestionRepository(source_db))
+```
 
+El UML completo está en `docs/plantuml/clases.puml`.

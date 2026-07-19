@@ -1,27 +1,23 @@
-from pathlib import Path
+from datetime import datetime
 
 import pandas as pd
 
-from app.repositories.gestion_repository import GestionRepository
+from app.repositories.source_gestion_repository import SourceGestionRepository
 
 
 class DescargadorService:
-    """Obtiene gestiones desde PostgreSQL/Supabase."""
+    """Descarga gestiones de ESCALL mediante un Stored Procedure de solo lectura."""
 
-    def __init__(self, gestion_repository: GestionRepository | None = None):
-        self.gestion_repository = gestion_repository
+    def __init__(self, source_repository: SourceGestionRepository):
+        self.source_repository = source_repository
 
-    def obtener_desde_base_datos(self, consulta_sql: str | None = None) -> pd.DataFrame:
-        if not self.gestion_repository:
-            raise ValueError("DescargadorService requiere un GestionRepository.")
-        registros = self.gestion_repository.obtener_gestiones_origen(consulta_sql)
+    def descargar_por_rango(
+        self,
+        fecha_desde: datetime,
+        fecha_hasta: datetime,
+    ) -> pd.DataFrame:
+        registros = self.source_repository.obtener_gestiones_por_rango(
+            fecha_desde,
+            fecha_hasta,
+        )
         return pd.DataFrame(registros)
-
-    def leer_csv(self, ruta_entrada: Path) -> pd.DataFrame:
-        """Lectura de respaldo para ejemplos academicos, no es el flujo principal."""
-        return pd.read_csv(ruta_entrada, dtype=str, encoding="utf-8")
-
-    def ejecutar_stored_procedure(self, nombre_sp: str) -> pd.DataFrame:
-        consulta = f"SELECT * FROM {nombre_sp}()"
-        return self.obtener_desde_base_datos(consulta)
-

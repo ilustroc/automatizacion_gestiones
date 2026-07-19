@@ -1,26 +1,12 @@
 # Contexto empresarial
 
-## Empresa
+ESCALL PERÚ presta servicios de gestión de cobranzas, seguimiento de contactos y elaboración de reportes operativos para supervisión, empresas contratantes y gerencia. Los asesores registran en el servidor ESCALL el resultado de cada interacción: fecha, DNI, teléfono, estado de contacto, tipificación, observación y, cuando corresponde, promesa de pago.
 
-ESCALL PERU es presentada en este proyecto academico como una empresa dedicada a servicios de gestion de cobranzas, seguimiento operativo de gestiones, control de cartera y elaboracion de reportes para supervision y toma de decisiones.
+La operación requiere transformar esos registros en información confiable. El supervisor necesita alertas de promesas; Impulse requiere el detalle de las gestiones realizadas; gerencia necesita medir la productividad diaria de los asesores.
 
-## Actividad principal
+La arquitectura distingue dos responsabilidades:
 
-La empresa registra gestiones de cobranza realizadas sobre clientes con deuda pendiente. Cada gestion puede incluir fecha, DNI, telefono, status, tipificacion, observacion, fecha de pago, monto de pago y usuario o asesor asociado.
+- La base `escarperu_software` de ESCALL conserva el dato operativo original y se trata como **solo lectura**.
+- La base local `automatizacion_gestiones` conserva datos limpios, controles, auditoría y resultados del proyecto.
 
-## Problematica identificada
-
-El proceso operativo presenta problemas comunes cuando la informacion se descarga y prepara manualmente:
-
-- Descarga manual de informacion desde sistemas o consultas.
-- Limpieza manual de documentos, telefonos, fechas y textos.
-- Tipificaciones escritas de formas distintas.
-- Registros duplicados.
-- Reportes lentos o dependientes del analista.
-- Falta de trazabilidad entre descarga, carga, reporte y envio.
-- Mayor riesgo de errores al preparar informacion para supervisores o empresas.
-
-## Necesidad del negocio
-
-ESCALL PERU necesita un proceso automatizado que permita obtener gestiones desde PostgreSQL/Supabase, limpiarlas, homologarlas, validarlas, evitar duplicados, registrar logs y consultar reportes desde una vista resumen.
-
+Esta separación protege la operación de ESCALL y permite que el proyecto procese, reporte y audite sin alterar la fuente oficial.

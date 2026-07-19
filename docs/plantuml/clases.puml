@@ -1,71 +1,109 @@
 @startuml
-title Diagrama de clases - Automatizacion de gestiones
+title Diagrama de clases final
 
-class Gestion {
-  fecha_gestion
-  dni
-  telefono
-  status
-  tipificacion
-  observacion
-  fecha_pago
-  monto_pago
-  nombre
-  clave_unica
-  generar_clave_unica()
+class DatabaseConnection {
+  - config
+  - connection
+  + conectar()
+  + cerrar()
+  + commit()
+  + rollback()
+  + ejecutar_consulta()
+  + ejecutar_procedimiento()
+  + ejecutar_lote()
+}
+
+class GestionOrigen <<dataclass>> {
+  + id: int
+  + fecha_gestion: datetime
+  + dni: str
+  + status: str
+  + tipificacion: str
+}
+
+class GestionProcesada <<dataclass>> {
+  + id_gestion_origen: int
+  + status_original: str
+  + status_homologado: str
+  + clave_unica: str
+}
+
+class SourceGestionRepository {
+  + obtener_gestiones_por_rango()
+  + obtener_gestiones_por_lotes()
+  + contar_gestiones_por_rango()
+  + probar_stored_procedure()
+}
+
+class ControlDescargaRepository {
+  + crear_control()
+  + obtener_pendiente()
+  + marcar_en_proceso()
+  + actualizar_contadores()
+  + marcar_finalizado()
+  + marcar_error()
+}
+
+class GestionProcesadaRepository {
+  + insertar_lote()
+  + insertar_ignorando_duplicados()
+  + existe_clave_unica()
+  + obtener_por_rango()
 }
 
 class DescargadorService {
-  gestion_repository
-  obtener_desde_base_datos(consulta_sql)
-  ejecutar_stored_procedure(nombre_sp)
-  leer_csv(ruta_entrada)
+  + descargar_por_rango()
 }
 
 class LimpiadorService {
-  limpiar_dataframe(df)
-  limpiar_dni(dni)
-  limpiar_telefono(telefono)
+  + limpiar_dataframe()
+  + limpiar_dni()
+  + limpiar_telefono()
+  + convertir_monto()
 }
 
 class HomologadorService {
-  homologar_dataframe(df)
-  homologar_status(status)
-  homologar_tipificacion(tipificacion)
+  + homologar_dataframe()
+  + homologar_status()
+  + homologar_tipificacion()
 }
 
 class ValidadorService {
-  validar_columnas(df)
-  obtener_registros_validos(df)
-  eliminar_duplicados(df)
-  agregar_clave_unica(df)
+  + obtener_registros_validos()
+  + generar_clave_unica()
+  + eliminar_duplicados()
 }
 
-class GestionRepository {
-  obtener_gestiones_origen(consulta_sql)
-  insertar_gestiones(gestiones, id_carga)
-  existe_clave_unica(clave_unica)
+class ProcesadorGestionesService {
+  + procesar_control()
 }
 
-class ReporteService {
-  obtener_resumen_desde_bd()
-  formatear_resumen_bd(resumen)
-  exportar_excel(df, ruta_salida)
+class ReportePromesasService {
+  + obtener_datos()
+  + generar_html()
+  + exportar_excel()
 }
-
+class ReporteImpulseService
+class ReporteGerenciaService
 class NotificacionService {
-  enviar_reporte(ruta_reporte, destinatarios)
-  registrar_intento_envio(id_reporte, id_destinatario)
+  + probar_conexion_smtp()
+  + enviar_html()
+  + enviar_con_adjunto()
 }
 
-DescargadorService --> GestionRepository
-DescargadorService ..> Gestion
-LimpiadorService ..> Gestion
-HomologadorService ..> Gestion
-ValidadorService ..> Gestion
-GestionRepository ..> Gestion
-ReporteService ..> GestionRepository
-NotificacionService ..> ReporteService
-
+SourceGestionRepository --> DatabaseConnection : source_db
+GestionProcesadaRepository --> DatabaseConnection : target_db
+ControlDescargaRepository --> DatabaseConnection : target_db
+DescargadorService --> SourceGestionRepository
+ProcesadorGestionesService --> DescargadorService
+ProcesadorGestionesService --> LimpiadorService
+ProcesadorGestionesService --> HomologadorService
+ProcesadorGestionesService --> ValidadorService
+ProcesadorGestionesService --> GestionProcesadaRepository
+ProcesadorGestionesService --> ControlDescargaRepository
+SourceGestionRepository ..> GestionOrigen
+GestionProcesadaRepository ..> GestionProcesada
+ReportePromesasService --> NotificacionService
+ReporteImpulseService --> NotificacionService
+ReporteGerenciaService --> NotificacionService
 @enduml
-

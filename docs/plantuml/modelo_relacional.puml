@@ -1,105 +1,118 @@
 @startuml
-title Modelo relacional - PostgreSQL/Supabase
 
-entity empresas {
-  * id_empresa : BIGSERIAL
-  --
-  nombre_empresa : VARCHAR
-  ruc : VARCHAR
-  estado : VARCHAR
+title Modelo relacional: origen ESCALL y destino local
+
+left to right direction
+hide methods
+
+package "ORIGEN ESCALL\nescarperu_software" {
+
+    entity "gestiones" as gestiones_origen {
+        * id : BIGINT
+        --
+        fecha_gestion : DATETIME
+        dni : VARCHAR
+        telefono : VARCHAR
+        status : VARCHAR
+        tipificacion : VARCHAR
+        fecha_pago : DATE
+        monto_pago : DECIMAL
+        nombre : VARCHAR
+    }
+
+    entity "sp_descargar_gestiones_rango" as sp <<procedure>> {
+        fecha_desde : DATETIME
+        fecha_hasta : DATETIME
+        --
+        resultado : GESTIONES
+    }
+
+    gestiones_origen --> sp : consulta por rango
 }
 
-entity usuarios {
-  * id_usuario : BIGSERIAL
-  --
-  nombre : VARCHAR
-  correo : VARCHAR
-  rol : VARCHAR
+package "DESTINO LOCAL\nautomatizacion_gestiones" {
+
+    entity "empresas" as empresas {
+        * id_empresa : BIGINT
+    }
+
+    entity "usuarios" as usuarios {
+        * id_usuario : BIGINT
+        --
+        id_empresa : BIGINT
+    }
+
+    entity "carteras" as carteras {
+        * id_cartera : BIGINT
+        --
+        id_empresa : BIGINT
+    }
+
+    entity "control_descargas_gestiones" as controles {
+        * id_control : BIGINT
+        --
+        fecha_desde : DATETIME
+        fecha_hasta : DATETIME
+        estado : ENUM
+        registros_origen : INT
+        registros_insertados : INT
+    }
+
+    entity "cargas_gestiones" as cargas {
+        * id_carga : BIGINT
+        --
+        id_control_descarga : BIGINT
+    }
+
+    entity "gestiones_procesadas" as procesadas {
+        * id_procesado : BIGINT
+        --
+        id_gestion_origen : BIGINT
+        fecha_gestion : DATETIME
+        dni : VARCHAR
+        status_homologado : VARCHAR
+        tipificacion_homologada : VARCHAR
+        clave_unica : CHAR(64)
+        id_control_descarga : BIGINT
+    }
+
+    entity "reportes" as reportes {
+        * id_reporte : BIGINT
+    }
+
+    entity "destinatarios_reportes" as destinatarios {
+        * id_destinatario : BIGINT
+    }
+
+    entity "envios_reportes" as envios {
+        * id_envio : BIGINT
+        --
+        id_reporte : BIGINT
+        id_destinatario : BIGINT
+    }
+
+    entity "logs_proceso" as logs {
+        * id_log : BIGINT
+        --
+        id_control_descarga : BIGINT
+    }
+
+    empresas ||--o{ usuarios : tiene
+    empresas ||--o{ carteras : administra
+
+    controles ||--o{ cargas : genera
+    controles ||--o{ procesadas : contiene
+    controles ||--o{ logs : registra
+
+    reportes ||--o{ envios : genera
+    destinatarios ||--o{ envios : recibe
 }
 
-entity carteras {
-  * id_cartera : BIGSERIAL
-  --
-  id_empresa : BIGINT
-  nombre_cartera : VARCHAR
-}
+sp ..> procesadas : Python descarga,\nhomologa y almacena
 
-entity cargas_gestiones {
-  * id_carga : BIGSERIAL
-  --
-  periodo_desde : DATE
-  periodo_hasta : DATE
-  origen : VARCHAR
-  registros_descargados : INT
-  registros_insertados : INT
-  registros_duplicados : INT
-  estado : VARCHAR
-}
-
-entity gestiones {
-  * id_gestion : BIGSERIAL
-  --
-  id_carga : BIGINT
-  id_cartera : BIGINT
-  id_usuario : BIGINT
-  fecha_gestion : TIMESTAMP
-  dni : VARCHAR
-  telefono : VARCHAR
-  status : VARCHAR
-  tipificacion : VARCHAR
-  clave_unica : VARCHAR
-}
-
-entity reportes {
-  * id_reporte : BIGSERIAL
-  --
-  tipo_reporte : VARCHAR
-  periodo_desde : DATE
-  periodo_hasta : DATE
-}
-
-entity destinatarios_reportes {
-  * id_destinatario : BIGSERIAL
-  --
-  id_empresa : BIGINT
-  nombre : VARCHAR
-  correo : VARCHAR
-}
-
-entity envios_reportes {
-  * id_envio : BIGSERIAL
-  --
-  id_reporte : BIGINT
-  id_destinatario : BIGINT
-  estado_envio : VARCHAR
-}
-
-entity logs_proceso {
-  * id_log : BIGSERIAL
-  --
-  id_carga : BIGINT
-  nivel : VARCHAR
-  mensaje : TEXT
-}
-
-entity vw_resumen_gestiones {
-  fecha
-  status
-  tipificacion
-  total_gestiones
-  clientes_unicos
-  monto_total
-}
-
-empresas ||--o{ carteras
-empresas ||--o{ destinatarios_reportes
-carteras ||--o{ gestiones
-usuarios ||--o{ gestiones
-cargas_gestiones ||--o{ gestiones
-cargas_gestiones ||--o{ logs_proceso
-reportes ||--o{ envios_reportes
-destinatarios_reportes ||--o{ envios_reportes
-gestiones ..> vw_resumen_gestiones
+note on link
+No existe escritura directa
+ni clave foránea entre servidores.
+end note
 
 @enduml
-

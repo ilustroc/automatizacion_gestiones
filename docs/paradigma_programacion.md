@@ -1,50 +1,25 @@
-# Paradigma de programacion
+# Paradigma de programación
 
-El proyecto usa principalmente el paradigma de programacion orientada a objetos.
+El proyecto usa **Programación Orientada a Objetos (POO)** porque el proceso reúne responsabilidades distintas que necesitan evolucionar sin mezclarse: conexión, descarga, limpieza, validación, persistencia, reportes y correo.
 
-## Justificacion
+Una **clase** define estructura y comportamiento; por ejemplo, `DatabaseConnection` define cómo abrir, confirmar y revertir una conexión. Un **objeto** es una instancia concreta, como `source_db` configurado para ESCALL o `target_db` configurado para el servidor local. Los **atributos** conservan estado, como `host`, `batch_size` o `estado`. Los **métodos** ejecutan acciones, como `obtener_gestiones_por_rango()`, `insertar_lote()` o `enviar_html()`.
 
-La programacion orientada a objetos permite representar el proceso de cobranza mediante clases con responsabilidades claras. Esto ayuda a explicar el sistema en una exposicion academica y facilita el mantenimiento del codigo.
+Principios aplicados:
 
-## Conceptos aplicados
+- **Encapsulamiento:** las credenciales y detalles de PyMySQL quedan en configuración y conexión.
+- **Abstracción:** los servicios trabajan con repositorios sin incorporar SQL directamente.
+- **Composición:** `ProcesadorGestionesService` coordina objetos especializados.
+- **Responsabilidad única:** cada clase atiende una parte concreta del flujo.
+- **Polimorfismo práctico:** los tests sustituyen repositorios y SMTP por objetos fake con la misma interfaz.
 
-### Clases
+La POO se complementa con una organización modular por capas:
 
-Una clase define atributos y metodos. En el proyecto existen clases como `Gestion`, `LimpiadorService`, `HomologadorService`, `ValidadorService` y `GestionRepository`.
+```text
+presentación (CLI/Tkinter/jobs)
+-> servicios
+-> repositorios
+-> modelos y utilidades
+-> MySQL origen/destino y SMTP
+```
 
-### Objetos
-
-Un objeto es una instancia de una clase. Por ejemplo, durante la ejecucion se crean objetos como `limpiador`, `homologador`, `validador` y `gestion_repository`.
-
-### Atributos
-
-Los atributos guardan informacion. En `Gestion`, los atributos principales son `fecha_gestion`, `dni`, `telefono`, `status`, `tipificacion`, `observacion`, `fecha_pago`, `monto_pago`, `nombre` y `clave_unica`.
-
-### Metodos
-
-Los metodos representan acciones. Por ejemplo:
-
-- `limpiar_dataframe()`
-- `homologar_status()`
-- `obtener_registros_validos()`
-- `agregar_clave_unica()`
-- `insertar_gestiones()`
-
-## Organizacion modular por capas
-
-Ademas de POO, el proyecto se organiza por capas:
-
-- `models`: entidades del dominio.
-- `services`: logica de negocio.
-- `repositories`: acceso a PostgreSQL/Supabase.
-- `utils`: funciones reutilizables.
-- `tests`: pruebas unitarias.
-- `docs`: documentacion academica y tecnica.
-
-## Patrones simples usados
-
-- Service Layer: separa la logica de limpieza, homologacion, validacion y reportes.
-- Repository: separa el acceso a base de datos del resto del sistema.
-
-No se usan patrones avanzados innecesarios, porque el objetivo es mantener un proyecto claro, profesional y facil de explicar.
-
+Esta combinación mejora legibilidad, pruebas, mantenimiento, seguridad y trazabilidad, criterios relevantes para una automatización académica y empresarial.

@@ -2,18 +2,17 @@
 
 ## Objetivo general
 
-Automatizar el proceso de descarga, limpieza, homologacion, validacion, carga y reporte de gestiones de cobranza usando Python y PostgreSQL/Supabase.
+Automatizar la descarga desde ESCALL y el procesamiento, almacenamiento, control y reporte de gestiones de cobranza en una base local, reduciendo trabajo manual y mejorando calidad, oportunidad y trazabilidad.
 
-## Objetivos especificos
+## Objetivos específicos
 
-1. Conectar el sistema Python a la base de datos PostgreSQL/Supabase mediante variables de entorno.
-2. Registrar cada ejecucion en la tabla `cargas_gestiones`.
-3. Obtener gestiones desde una consulta SQL o un futuro Stored Procedure.
-4. Limpiar campos operativos como DNI, telefono, observacion, nombre, fechas y montos.
-5. Homologar status y tipificaciones para obtener valores consistentes.
-6. Validar campos obligatorios antes de insertar datos.
-7. Generar una `clave_unica` para evitar duplicados.
-8. Insertar en la tabla `gestiones` solo registros validos y no duplicados.
-9. Registrar eventos y errores en `logs_proceso`.
-10. Consultar reportes desde la vista `vw_resumen_gestiones`.
-
+1. Conectar de forma segura e independiente con la base origen ESCALL y la base destino local.
+2. Descargar gestiones por rango exclusivo de fecha y hora mediante Stored Procedure, sin modificar ESCALL.
+3. Limpiar DNI, teléfono, textos, fechas y montos sin perder ceros iniciales.
+4. Homologar estados y tipificaciones mediante reglas configurables.
+5. Validar campos obligatorios y descartar registros incompletos con contadores auditables.
+6. Evitar duplicados con SHA-256 e índice único.
+7. Registrar controles, transacciones, errores y logs en MySQL/MariaDB local.
+8. Generar reportes de promesas, detalle para Impulse y productividad gerencial.
+9. Permitir Excel, HTML, simulación y envío SMTP confirmado.
+10. Ejecutar el proceso manualmente, por pendientes, con interfaz o mediante job horario.

@@ -1,41 +1,31 @@
-from app.repositories.gestion_repository import GestionRepository
+from app.repositories.gestion_procesada_repository import GestionProcesadaRepository
 
 
 class FakeDatabase:
     def __init__(self):
-        self.llamadas = 0
+        self.lotes = []
 
-    def insertar_y_retornar(self, sql, parametros):
-        self.llamadas += 1
-        if self.llamadas == 1:
-            return {"id_gestion": 10}
-        return None
+    def ejecutar_lote(self, sql, parametros):
+        self.lotes.append((sql, parametros))
+        return len(parametros) - (1 if len(self.lotes) == 1 else 0)
 
 
-def test_insertar_gestiones_cuenta_insertados_y_duplicados():
+def test_insercion_por_lotes_cuenta_insertados_y_duplicados():
     db = FakeDatabase()
-    repository = GestionRepository(db)
+    repository = GestionProcesadaRepository(db, batch_size=2)
     gestiones = [
         {
-            "fecha_gestion": "2026-06-01 09:15:00",
-            "dni": "12345678",
-            "telefono": "987654321",
-            "status": "DIRECTO",
-            "tipificacion": "PROMESA DE PAGO",
-            "clave_unica": "1",
-        },
-        {
-            "fecha_gestion": "2026-06-01 09:15:00",
-            "dni": "12345678",
-            "telefono": "987654321",
-            "status": "DIRECTO",
-            "tipificacion": "PROMESA DE PAGO",
-            "clave_unica": "1",
-        },
+            "id": indice,
+            "fecha_gestion": "2026-07-18 08:00:00",
+            "dni": f"0000000{indice}",
+            "status_homologado": "DIRECTO",
+            "tipificacion_homologada": "PROMESA DE PAGO",
+            "clave_unica": str(indice) * 64,
+        }
+        for indice in (1, 2, 3)
     ]
-
-    insertados, duplicados = repository.insertar_gestiones(gestiones, id_carga=1)
-
-    assert insertados == 1
+    insertados, duplicados = repository.insertar_lote(gestiones, 9)
+    assert len(db.lotes) == 2
+    assert insertados == 2
     assert duplicados == 1
-
+    assert all(parametros[-1] == 9 for _, lote in db.lotes for parametros in lote)

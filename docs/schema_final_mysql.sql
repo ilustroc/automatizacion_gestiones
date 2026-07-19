@@ -1,0 +1,11 @@
+-- Archivo indice conservado por compatibilidad con entregas anteriores.
+-- La arquitectura final usa dos bases y se instala en este orden:
+--
+-- 1. En ESCALL / escarperu_software:
+--    docs/sql/01_source_escall_sp.sql
+--
+-- 2. En MySQL/MariaDB local:
+--    docs/sql/02_target_local_schema.sql
+--    docs/sql/03_target_local_views.sql
+--
+-- No ejecute estructuras de destino dentro de la base origen ESCALL.

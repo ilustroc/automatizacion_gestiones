@@ -1,34 +1,16 @@
 # Flujo operativo
 
-## Entrada principal
+Este documento complementa `proceso_automatizar.md`.
 
-La entrada principal es PostgreSQL/Supabase. El sistema puede usar:
+1. Registrar un rango válido o seleccionar un pendiente.
+2. Conectar el destino y marcar el control `EN_PROCESO`.
+3. Conectar ESCALL y ejecutar el Stored Procedure parametrizado.
+4. Limpiar, homologar y validar.
+5. Generar SHA-256 y descartar duplicados del lote.
+6. Insertar por lotes en `gestiones_procesadas`.
+7. Confirmar la transacción local y finalizar el control.
+8. Consultar vistas locales para reportes.
+9. Generar HTML/Excel y, con confirmación, enviar por SMTP.
+10. Registrar logs, reportes y envíos.
 
-- una consulta SQL configurada en `DATABASE_SOURCE_QUERY`
-- un futuro Stored Procedure configurado como mejora posterior
-
-## Procesamiento
-
-1. `DescargadorService` obtiene registros desde la base de datos.
-2. `ValidadorService` valida columnas requeridas.
-3. `LimpiadorService` limpia campos.
-4. `HomologadorService` estandariza status y tipificacion.
-5. `ValidadorService` descarta registros sin obligatorios.
-6. `ValidadorService` elimina duplicados del lote.
-7. `ValidadorService` genera `clave_unica`.
-8. `GestionRepository` inserta en `gestiones`.
-9. `CargaGestionRepository` actualiza la carga.
-10. `LogProcesoRepository` registra eventos.
-11. `ReporteService` consulta `vw_resumen_gestiones`.
-
-## Salida principal
-
-La salida principal queda en base de datos:
-
-- registros insertados en `gestiones`
-- ejecucion registrada en `cargas_gestiones`
-- eventos registrados en `logs_proceso`
-- resumen consultado desde `vw_resumen_gestiones`
-
-La exportacion a Excel queda como opcion auxiliar, no obligatoria.
-
+Si ocurre un error, se revierte la transacción de destino y el control queda en `ERROR`. ESCALL permanece sin modificaciones.

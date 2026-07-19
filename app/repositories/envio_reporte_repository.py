@@ -1,27 +1,35 @@
-from app.repositories.database import Database
+from app.repositories.database import DatabaseConnection
 
 
 class EnvioReporteRepository:
-    def __init__(self, db: Database):
-        self.db = db
+    def __init__(self, target_db: DatabaseConnection):
+        self.target_db = target_db
 
-    def registrar_intento(
+    def registrar_envio(
         self,
-        id_reporte: int,
-        id_destinatario: int,
-        estado_envio: str = "PENDIENTE",
+        tipo_reporte: str,
+        destinatario: str,
+        asunto: str,
+        estado_envio: str,
         mensaje_error: str | None = None,
-    ) -> None:
-        self.db.ejecutar(
+    ) -> int:
+        return self.target_db.ejecutar_y_obtener_id(
             """
             INSERT INTO envios_reportes (
-                id_reporte,
-                id_destinatario,
-                estado_envio,
-                mensaje_error
+                tipo_reporte, destinatario, asunto, estado_envio,
+                mensaje_error, fecha_envio
             )
-            VALUES (%s, %s, %s, %s)
+            VALUES (
+                %s, %s, %s, %s, %s,
+                CASE WHEN %s = 'ENVIADO' THEN CURRENT_TIMESTAMP ELSE NULL END
+            )
             """,
-            (id_reporte, id_destinatario, estado_envio, mensaje_error),
+            (
+                tipo_reporte,
+                destinatario,
+                asunto,
+                estado_envio,
+                mensaje_error,
+                estado_envio,
+            ),
         )
-

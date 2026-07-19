@@ -1,39 +1,39 @@
 # Proceso a automatizar
 
-## Proceso actual
+## Proceso anterior
 
-El proceso manual depende del analista. La informacion puede descargarse desde sistemas, consultas o archivos, luego se limpia manualmente, se revisan duplicados y se preparan reportes. Esto genera demoras, errores y poca trazabilidad.
+1. Una persona extraía datos o trabajaba con un archivo intermedio.
+2. Corregía manualmente DNI, teléfonos, fechas, montos y textos.
+3. Interpretaba estados y tipificaciones con criterios no siempre uniformes.
+4. Buscaba duplicados en hojas de cálculo.
+5. Preparaba resúmenes y enviaba correos.
+6. Los errores no siempre quedaban registrados.
 
 ## Proceso automatizado
 
-El sistema automatizado usa PostgreSQL/Supabase como fuente y destino principal de informacion.
-
-Flujo textual:
-
 ```text
-Base de datos / SP
--> descarga
+Base ESCALL / Stored Procedure
+-> descarga parametrizada
 -> limpieza
--> homologacion
--> validacion
--> eliminacion de duplicados
--> carga en PostgreSQL/Supabase
--> reporte
--> logs
+-> homologación
+-> validación
+-> SHA-256 y eliminación de duplicados
+-> carga por lotes en MySQL/MariaDB local
+-> vistas de reportes
+-> HTML y Excel
+-> SMTP
+-> logs, controles y auditoría
 ```
 
-## Flujo implementado
+1. CLI, Tkinter o job crea/selecciona un control con `fecha_desde` inclusiva y `fecha_hasta` exclusiva.
+2. `SourceGestionRepository` ejecuta `CALL sp_descargar_gestiones_rango(%s, %s)` sobre ESCALL.
+3. `LimpiadorService` normaliza los campos sin convertir el DNI a entero.
+4. `HomologadorService` produce `DIRECTO`, `INDIRECTO`, `NO CONTACTO` o `SIN GESTIÓN`.
+5. `ValidadorService` exige id de origen, fecha, DNI, status y tipificación.
+6. La cadena `dni|telefono|fecha_gestion|status|tipificacion` se transforma en SHA-256 hexadecimal.
+7. `GestionProcesadaRepository` usa `INSERT IGNORE` por lotes dentro de una transacción local.
+8. El control registra origen, insertados, duplicados e inválidos.
+9. Las vistas locales alimentan tres reportes; ESCALL ya no participa en esa etapa.
+10. Los intentos de correo y los errores quedan auditados.
 
-1. Cargar configuracion desde `.env`.
-2. Conectarse a PostgreSQL/Supabase.
-3. Crear una carga en `cargas_gestiones` con estado `INICIADO`.
-4. Obtener registros desde una consulta SQL definida.
-5. Limpiar los campos operativos.
-6. Homologar status y tipificacion.
-7. Validar campos obligatorios.
-8. Generar `clave_unica`.
-9. Insertar registros en `gestiones` usando `ON CONFLICT DO NOTHING`.
-10. Actualizar la carga con registros descargados, insertados y duplicados.
-11. Registrar logs en `logs_proceso`.
-12. Mostrar resumen consultado desde `vw_resumen_gestiones`.
-
+Ante una excepción se ejecuta `rollback`, el control pasa a `ERROR`, se guarda un mensaje comprensible y ambas conexiones se cierran.

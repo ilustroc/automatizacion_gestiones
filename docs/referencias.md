@@ -8,7 +8,8 @@ Estas referencias provienen del documento academico entregado como base del proy
 - Softland Peru. (2025). Automatizacion de procesos: como las empresas peruanas pueden aumentar su eficiencia operativa.
 - Superintendencia Nacional de Aduanas y de Administracion Tributaria. (2024). Plan de Gobierno Digital 2025-2027.
 - Serquen, M. P. D. (2022). Automatizacion del proceso de cobranza de la banca mayorista de uno de los principales bancos del Peru. Universidad de Piura.
-- Supabase. Supabase: The Postgres development platform.
+- Python Software Foundation. Documentación de Python 3.
+- Oracle. Documentación de MySQL.
+- MariaDB Foundation. Documentación de MariaDB Server.
 - Taipe Coronacion, M. P. (2026). Implementacion de un sistema RPA para mejorar el proceso de cobranzas de una empresa aseguradora. Universidad San Ignacio de Loyola.
 - Valtx. (2022). La implementacion de RPA como un caso de exito en Financiera Efectiva.
-

@@ -1,34 +1,26 @@
-from datetime import date
-
-from app.repositories.database import Database
+from app.repositories.database import DatabaseConnection
 
 
 class CargaGestionRepository:
-    def __init__(self, db: Database):
-        self.db = db
+    """Historial complementario de cargas guardado en la base local."""
+
+    def __init__(self, target_db: DatabaseConnection):
+        self.target_db = target_db
 
     def crear_carga(
         self,
-        periodo_desde: date,
-        periodo_hasta: date,
-        origen: str = "BASE_DATOS",
-        nombre_sp: str | None = None,
+        id_control_descarga: int | None,
+        nombre_fuente: str = "ESCALL_SP",
     ) -> int:
-        fila = self.db.insertar_y_retornar(
+        return self.target_db.ejecutar_y_obtener_id(
             """
             INSERT INTO cargas_gestiones (
-                periodo_desde,
-                periodo_hasta,
-                origen,
-                nombre_sp,
-                estado
+                id_control_descarga, nombre_fuente, estado
             )
-            VALUES (%s, %s, %s, %s, 'INICIADO')
-            RETURNING id_carga
+            VALUES (%s, %s, 'INICIADO')
             """,
-            (periodo_desde, periodo_hasta, origen, nombre_sp),
+            (id_control_descarga, nombre_fuente),
         )
-        return int(fila["id_carga"])
 
     def finalizar_carga(
         self,
@@ -36,27 +28,25 @@ class CargaGestionRepository:
         registros_descargados: int,
         registros_insertados: int,
         registros_duplicados: int,
+        registros_invalidos: int = 0,
         estado: str = "FINALIZADO",
-        observacion: str | None = None,
+        mensaje_error: str | None = None,
     ) -> None:
-        self.db.ejecutar(
+        self.target_db.ejecutar(
             """
             UPDATE cargas_gestiones
-            SET fecha_fin = NOW(),
-                registros_descargados = %s,
-                registros_insertados = %s,
-                registros_duplicados = %s,
-                estado = %s,
-                observacion = %s
+            SET estado = %s, registros_descargados = %s,
+                registros_insertados = %s, registros_duplicados = %s,
+                registros_invalidos = %s, mensaje_error = %s
             WHERE id_carga = %s
             """,
             (
+                estado,
                 registros_descargados,
                 registros_insertados,
                 registros_duplicados,
-                estado,
-                observacion,
+                registros_invalidos,
+                mensaje_error,
                 id_carga,
             ),
         )
-

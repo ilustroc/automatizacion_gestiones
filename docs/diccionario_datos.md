@@ -1,36 +1,36 @@
-# Diccionario de datos
+# Diccionario de datos principal
 
-## Tabla gestiones
+## `control_descargas_gestiones`
 
-| Campo | Tipo | Restriccion | Descripcion |
-|---|---|---|---|
-| id_gestion | BIGSERIAL | PK | Identificador unico de la gestion. |
-| id_carga | BIGINT | FK, NOT NULL | Ejecucion de carga que origino la gestion. |
-| id_cartera | BIGINT | FK | Cartera o campana asociada. |
-| id_usuario | BIGINT | FK | Usuario interno relacionado con la gestion. |
-| fecha_gestion | TIMESTAMP | NOT NULL | Fecha y hora de la gestion. |
-| dni | VARCHAR(15) | NOT NULL | Documento del cliente. |
-| telefono | VARCHAR(20) | NULL | Telefono gestionado. |
-| status | VARCHAR(30) | NOT NULL | Resultado general del contacto. |
-| tipificacion | VARCHAR(120) | NOT NULL | Detalle operativo de la gestion. |
-| observacion | TEXT | NULL | Comentario operativo. |
-| fecha_pago | DATE | NULL | Fecha de pago o compromiso. |
-| monto_pago | NUMERIC(12,2) | NULL | Monto de pago o compromiso. |
-| nombre | VARCHAR(150) | NULL | Nombre asociado al registro. |
-| clave_unica | VARCHAR(250) | UNIQUE, NOT NULL | Clave compuesta para evitar duplicados. |
-| creado_en | TIMESTAMP | NOT NULL | Fecha de creacion del registro. |
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `id_control` | BIGINT PK | Identificador de ejecución |
+| `fecha_desde` | DATETIME | Límite inicial inclusivo |
+| `fecha_hasta` | DATETIME | Límite final exclusivo |
+| `estado` | ENUM | PENDIENTE, EN_PROCESO, FINALIZADO o ERROR |
+| `tipo_descarga` | ENUM | MANUAL o AUTOMATICA |
+| `registros_*` | INT | Origen, insertados, duplicados e inválidos |
+| `mensaje_error` | TEXT | Error comprensible de la ejecución |
+| `fecha_inicio_proceso` | DATETIME | Inicio real |
+| `fecha_fin_proceso` | DATETIME | Fin real |
 
-## Reglas de limpieza
+## `gestiones_procesadas`
 
-| Campo | Regla |
-|---|---|
-| dni | Conservar solo numeros. |
-| telefono | Conservar solo numeros. |
-| status | Limpiar espacios, convertir a mayusculas y homologar. |
-| tipificacion | Limpiar espacios, convertir a mayusculas y homologar. |
-| fecha_gestion | Convertir a fecha/hora valida. |
-| fecha_pago | Permitir nulo o fecha valida. |
-| monto_pago | Permitir nulo o decimal. |
-| observacion | Quitar espacios innecesarios. |
-| nombre | Quitar espacios innecesarios. |
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `id_procesado` | BIGINT PK | Identificador local |
+| `id_gestion_origen` | BIGINT | Identificador de ESCALL |
+| `fecha_gestion` | DATETIME | Fecha y hora normalizada |
+| `dni` | VARCHAR(20) | Documento conservado como texto |
+| `telefono` | VARCHAR(30) | Teléfono limpio o NULL |
+| `status_original` | VARCHAR(100) | Valor recibido |
+| `tipificacion_original` | VARCHAR(150) | Valor recibido |
+| `status_homologado` | VARCHAR(50) | DIRECTO, INDIRECTO, NO CONTACTO o SIN GESTIÓN |
+| `tipificacion_homologada` | VARCHAR(150) | Regla estandarizada |
+| `fecha_pago` | DATE | Promesa o pago, si corresponde |
+| `monto_pago` | DECIMAL(14,2) | Monto normalizado |
+| `nombre_asesor` | VARCHAR(150) | Asesor asociado |
+| `clave_unica` | CHAR(64) UNIQUE | SHA-256 hexadecimal |
+| `id_control_descarga` | BIGINT FK | Ejecución que insertó la fila |
 
+Las definiciones completas están en `docs/sql/02_target_local_schema.sql`.

@@ -1,55 +1,69 @@
 @startuml
-title Arquitectura por capas
+title Arquitectura de la solución por capas
 
-actor "Usuario final / Analista" as Analista
-database "Supabase / PostgreSQL" as DB
+left to right direction
+actor "Analista" as Analista
+actor "Supervisor" as Supervisor
+actor "Empresa Impulse" as Impulse
+actor "Gerencia" as Gerencia
+component "CLI / Tkinter / Jobs" as Presentacion
+database "Servidor ESCALL\nescarperu_software\nSOLO LECTURA" as SourceDB
+database "Servidor local\nautomatizacion_gestiones" as TargetDB
+cloud "Servidor SMTP" as SMTP
 
-package "Capa repositories" {
-  [Database]
-  [GestionRepository]
-  [CargaGestionRepository]
-  [ReporteRepository]
-  [LogProcesoRepository]
+package "Capa de repositorios" {
+  component SourceGestionRepository
+  component SourceSchemaRepository
+  component GestionProcesadaRepository
+  component ControlDescargaRepository
+  component ReporteRepository
+  component LogProcesoRepository
+  component EnvioReporteRepository
 }
 
-package "Capa services" {
-  [DescargadorService]
-  [LimpiadorService]
-  [HomologadorService]
-  [ValidadorService]
-  [ReporteService]
-  [NotificacionService]
+package "Capa de servicios" {
+  component DescargadorService
+  component ProcesadorGestionesService
+  component LimpiadorService
+  component HomologadorService
+  component ValidadorService
+  component "Servicios de reportes" as Reportes
+  component NotificacionService
 }
 
-package "Capa models" {
-  [Gestion]
+package "Capa de modelos" {
+  component GestionOrigen
+  component GestionProcesada
+  component ControlDescarga
+  component ResultadoProceso
 }
 
-package "Capa reportes" {
-  [vw_resumen_gestiones]
-  [Resumen en consola]
-}
+Analista --> Presentacion
+Presentacion --> ProcesadorGestionesService
+SourceGestionRepository --> SourceDB : CALL SP / SELECT
+SourceSchemaRepository --> SourceDB : diagnóstico
+DescargadorService --> SourceGestionRepository
+ProcesadorGestionesService --> DescargadorService
+ProcesadorGestionesService --> LimpiadorService
+ProcesadorGestionesService --> HomologadorService
+ProcesadorGestionesService --> ValidadorService
+ProcesadorGestionesService --> GestionProcesadaRepository
+ProcesadorGestionesService --> ControlDescargaRepository
+GestionProcesadaRepository --> TargetDB
+ControlDescargaRepository --> TargetDB
+LogProcesoRepository --> TargetDB
+ReporteRepository --> TargetDB : vistas locales
+Reportes --> ReporteRepository
+Reportes --> NotificacionService
+NotificacionService --> SMTP
+NotificacionService --> EnvioReporteRepository
+EnvioReporteRepository --> TargetDB
+SMTP --> Supervisor
+SMTP --> Impulse
+SMTP --> Gerencia
 
-package "Capa logs" {
-  [logs_proceso]
-  [logs/proceso.log]
-}
-
-Analista --> [run.py]
-[run.py] --> [DescargadorService]
-[DescargadorService] --> [GestionRepository]
-[LimpiadorService] --> [Gestion]
-[HomologadorService] --> [Gestion]
-[ValidadorService] --> [Gestion]
-[GestionRepository] --> DB
-[CargaGestionRepository] --> DB
-[ReporteRepository] --> DB
-[LogProcesoRepository] --> DB
-[ReporteService] --> [vw_resumen_gestiones]
-[vw_resumen_gestiones] --> DB
-[ReporteService] --> [Resumen en consola]
-[LogProcesoRepository] --> [logs_proceso]
-[logs_proceso] --> DB
-
+note bottom of SourceDB
+La aplicación no ejecuta
+INSERT, UPDATE ni DELETE.
+end note
 @enduml
-

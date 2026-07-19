@@ -1,142 +1,183 @@
-# Automatizacion de gestiones de cobranza
+# Automatización de gestiones de cobranza
 
-Proyecto academico para el curso Lenguajes de Programacion. Automatiza el proceso de descarga, limpieza, homologacion, validacion, carga y reporte de gestiones de cobranza usando Python y PostgreSQL/Supabase.
+Proyecto académico del curso Lenguajes de Programación. Automatiza la descarga, limpieza, homologación, validación, deduplicación, almacenamiento y reporte de gestiones de cobranza de ESCALL PERÚ.
 
-## Problema que resuelve
+## Arquitectura final
 
-En una operacion de cobranzas como ESCALL PERU, las gestiones pueden prepararse manualmente antes de reportarse. Esto genera demoras, duplicados, errores de digitacion, tipificaciones no estandarizadas y poca trazabilidad.
+El sistema trabaja con dos bases MySQL/MariaDB independientes:
 
-El sistema centraliza el flujo en la base de datos: registra cargas, procesa gestiones, evita duplicados, guarda logs y consulta reportes desde `vw_resumen_gestiones`.
-
-## Paradigma usado
-
-El proyecto usa programacion orientada a objetos. Las responsabilidades se separan en clases:
-
-- `Gestion`
-- `DescargadorService`
-- `LimpiadorService`
-- `HomologadorService`
-- `ValidadorService`
-- `GestionRepository`
-- `ReporteService`
-- `NotificacionService`
-
-Tambien se aplica organizacion modular por capas: `models`, `services`, `repositories`, `utils`, `docs` y `tests`.
-
-## Arquitectura
+1. **Origen ESCALL:** base `escarperu_software` alojada en cPanel. La aplicación solo ejecuta `sp_descargar_gestiones_rango` y nunca inserta, actualiza ni elimina datos.
+2. **Destino local:** base `automatizacion_gestiones`. Guarda controles, gestiones procesadas, logs, reportes y envíos.
 
 ```text
-Supabase/PostgreSQL
--> repositories
--> services
--> models/utils
--> reportes/logs
--> usuario analista
+ESCALL / gestiones
+-> Stored Procedure de lectura
+-> Python
+-> limpieza -> homologación -> validación -> SHA-256
+-> MySQL local / gestiones_procesadas
+-> vistas -> HTML/Excel -> SMTP
+-> logs y auditoría
 ```
 
-El CSV ya no es el flujo principal. Puede mantenerse como respaldo academico o archivo de ejemplo, pero la ejecucion principal usa PostgreSQL/Supabase.
+El CSV de la primera entrega se conserva en `data/examples/gestiones.csv` únicamente como evidencia académica. No participa en el flujo principal.
 
-## Instalacion
+## Paradigma y capas
 
-```bash
+Se usa Programación Orientada a Objetos. Los objetos encapsulan configuración, conexiones, modelos, repositorios y servicios. La solución aplica arquitectura por capas:
+
+- `app/models`: entidades con `dataclasses` y tipos.
+- `app/repositories`: acceso parametrizado a origen y destino.
+- `app/services`: procesamiento, diagnóstico, reportes y notificación.
+- `app/ui`: interfaz Tkinter para registrar y ejecutar rangos.
+- `jobs`: descarga horaria y envío programado de reportes.
+- `docs`: SQL, informe, guías y diagramas.
+- `tests`: pruebas con fakes y mocks, sin bases ni correos reales.
+
+## Requisitos
+
+- Windows 10/11 o servidor Linux/cPanel.
+- Python 3.11 o superior, compatible con Python 3.13.
+- MySQL o MariaDB local.
+- Acceso remoto de lectura al MySQL de ESCALL.
+
+```powershell
 python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
+.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
 ```
 
-## Configuracion del .env
+## Instalación SQL
 
-Crear un archivo `.env` en la raiz del proyecto tomando como base `.env.example`:
+En ESCALL, seleccionar `escarperu_software` en phpMyAdmin y ejecutar:
 
 ```text
-DATABASE_HOST=
-DATABASE_PORT=5432
-DATABASE_NAME=
-DATABASE_USER=
-DATABASE_PASSWORD=
-DATABASE_SSLMODE=require
-DATABASE_SOURCE_QUERY=
-DATABASE_SOURCE_SP=
+docs/sql/01_source_escall_sp.sql
 ```
 
-No subir credenciales reales a GitHub.
+El usuario que crea el procedimiento necesita `SELECT`, `CREATE ROUTINE`, `ALTER ROUTINE` y `EXECUTE`. El usuario remoto de la aplicación solo necesita `SELECT`, `EXECUTE` y `SHOW VIEW`.
 
-`DATABASE_SOURCE_QUERY` permite definir la consulta que obtiene las gestiones de origen. En una fase futura puede reemplazarse por un Stored Procedure.
+En MySQL/MariaDB local, ejecutar en orden:
 
-## Ejecucion del sistema
-
-```bash
-python run.py
+```text
+docs/sql/02_target_local_schema.sql
+docs/sql/03_target_local_views.sql
 ```
 
-Flujo principal:
+La última vista usa `DENSE_RANK`, disponible en MySQL 8+ y MariaDB 10.2+. Si el motor es anterior, puede omitirse: Python calcula el ranking gerencial.
 
-1. Cargar configuracion desde `.env`.
-2. Conectarse a PostgreSQL/Supabase.
-3. Crear registro en `cargas_gestiones`.
-4. Obtener gestiones desde base de datos.
-5. Limpiar campos.
-6. Homologar status y tipificacion.
-7. Validar campos obligatorios.
-8. Generar `clave_unica`.
-9. Insertar registros no duplicados en `gestiones`.
-10. Actualizar la carga.
-11. Registrar logs en `logs_proceso`.
-12. Mostrar resumen desde `vw_resumen_gestiones`.
+## Configuración
 
-## Ejecucion de pruebas
+Crear `.env` a partir de `.env.example`. Todas las contraseñas deben ir entre comillas dobles, sin espacios alrededor de `=`:
 
-```bash
+```dotenv
+SOURCE_DB_PASSWORD="contraseña_origen_con_simbolos"
+TARGET_DB_PASSWORD="contraseña_local"
+SMTP_PASSWORD="contraseña_del_correo"
+```
+
+`python-dotenv` retira las comillas y conserva caracteres como `&`, `#`, `?`, `{}`, `[]`, `+`, `-`, `@` y `%`. El archivo `.env` está excluido por `.gitignore`.
+
+Los grupos de variables son:
+
+- `SOURCE_DB_*`: servidor ESCALL.
+- `TARGET_DB_*`: servidor local.
+- `SMTP_*`: servidor y remitente completo.
+- `MAIL_*`: gerencia, supervisor e Impulse.
+- `BATCH_SIZE`, `EXPORTAR_EXCEL`, `ENVIAR_CORREOS`, `APP_TIMEZONE`.
+
+## Diagnóstico
+
+```powershell
+python run.py --modo diagnostico
+```
+
+Comprueba ambas conexiones, versiones, columnas de `gestiones`, Stored Procedure y tablas locales. Es de solo lectura y no muestra contraseñas. Si no hay credenciales o acceso, termina de forma controlada e indica qué configurar.
+
+## Descargas
+
+Rango de días. La fecha final se interpreta como día inclusivo; el ejemplo consulta desde `2026-07-01 00:00:00` hasta el límite exclusivo `2026-07-19 00:00:00`:
+
+```powershell
+python run.py --modo manual --fecha-inicio 2026-07-01 --fecha-fin 2026-07-18
+```
+
+Rango exacto de fecha y hora:
+
+```powershell
+python run.py --modo manual --fecha-desde "2026-07-18 08:00:00" --fecha-hasta "2026-07-18 09:00:00"
+```
+
+Procesar el control pendiente más antiguo:
+
+```powershell
+python run.py --modo pendiente
+```
+
+Procesar la última hora cerrada:
+
+```powershell
+python run.py --modo automatico
+```
+
+Abrir la interfaz:
+
+```powershell
+python run.py --interfaz
+```
+
+## Reportes
+
+Generar Excel sin enviar correo:
+
+```powershell
+python run.py --reporte promesas --solo-generar
+python run.py --reporte impulse --fecha-inicio 2026-07-18 --fecha-fin 2026-07-18 --solo-generar
+python run.py --reporte gerencia --fecha-inicio 2026-07-01 --fecha-fin 2026-07-18 --solo-generar
+python run.py --reporte todos --solo-generar
+```
+
+El envío real requiere `ENVIAR_CORREOS="true"` en `.env`, configuración SMTP válida y confirmación explícita:
+
+```powershell
+python run.py --reporte todos --enviar
+```
+
+El supervisor recibe promesas, Impulse recibe el detalle operativo y gerencia recibe productividad y ranking de asesores. Cada intento se registra en `envios_reportes`.
+
+## Automatización horaria
+
+Cron de cPanel para descargar cada hora cerrada:
+
+```cron
+0 * * * * cd /RUTA/automatizacion_gestiones && /usr/bin/python3 jobs/job_descarga_horaria.py >> logs/job_descarga_horaria.log 2>&1
+```
+
+Reportes programados:
+
+```cron
+15 8 * * * cd /RUTA/automatizacion_gestiones && /usr/bin/python3 jobs/job_envio_reportes.py --reporte promesas >> logs/job_reportes.log 2>&1
+0 19 * * * cd /RUTA/automatizacion_gestiones && /usr/bin/python3 jobs/job_envio_reportes.py --reporte todos >> logs/job_reportes.log 2>&1
+```
+
+En Windows, crear tareas que ejecuten `python.exe` con cada script como argumento. La clave SHA-256 y el índice único hacen que repetir una hora no duplique gestiones.
+
+## Pruebas
+
+```powershell
 python -m pytest -q
 ```
 
-Las pruebas no dependen de Supabase real. La insercion en base de datos se simula con mocks/fakes.
+Las pruebas no abren conexiones reales ni envían correos.
 
-## Base de datos
+## Evidencias sugeridas
 
-El script SQL se encuentra en:
+- `SHOW COLUMNS FROM gestiones` y el procedimiento en ESCALL.
+- Tablas y vistas de `automatizacion_gestiones`.
+- Diagnóstico controlado.
+- Descarga manual y contadores del control.
+- Registros en `gestiones_procesadas` y hash de 64 caracteres.
+- `logs_proceso`, `reportes` y `envios_reportes`.
+- Los tres Excel y un correo de prueba autorizado.
+- Resultado completo de `pytest`.
 
-```text
-docs/schema.sql
-```
-
-Tablas principales:
-
-- `empresas`
-- `usuarios`
-- `carteras`
-- `cargas_gestiones`
-- `gestiones`
-- `reportes`
-- `destinatarios_reportes`
-- `envios_reportes`
-- `logs_proceso`
-- `vw_resumen_gestiones`
-
-## Evidencias para presentacion
-
-Capturas recomendadas:
-
-- ejecucion de `python run.py`
-- configuracion `.env` sin mostrar contrasena
-- tablas creadas en Supabase
-- registros en `cargas_gestiones`
-- registros en `gestiones`
-- logs en `logs_proceso`
-- consulta de `vw_resumen_gestiones`
-- pruebas aprobadas con `python -m pytest -q`
-
-## Documentacion
-
-- `docs/paradigma_programacion.md`
-- `docs/contexto_empresarial.md`
-- `docs/objetivos.md`
-- `docs/proceso_automatizar.md`
-- `docs/modelo_logico.md`
-- `docs/modelo_fisico_base_datos.md`
-- `docs/codigo_fuente.md`
-- `docs/presentacion_automatizacion.md`
-- `docs/conclusiones_recomendaciones.md`
-- `docs/guia_exposicion.md`
-- `docs/schema.sql`
-
+La guía de exposición está en `docs/guia_exposicion_final.md` y el informe consolidado en `docs/informe_final.md`.

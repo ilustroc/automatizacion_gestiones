@@ -1,42 +1,16 @@
 from app.services.homologador_service import HomologadorService
 
 
-def test_homologacion_status_contacto_directo():
+def test_homologacion_status_definidos():
     homologador = HomologadorService()
-
-    resultado = homologador.homologar_status("CD")
-
-    assert resultado == "DIRECTO"
-
-
-def test_homologacion_status_ilocalizado():
-    homologador = HomologadorService()
-
-    resultado = homologador.homologar_status("ILOCALIZADO")
-
-    assert resultado == "NO CONTACTO"
+    assert homologador.homologar_status("CD") == "DIRECTO"
+    assert homologador.homologar_status("contacto indirecto") == "INDIRECTO"
+    assert homologador.homologar_status("ILOCALIZADO") == "NO CONTACTO"
+    assert homologador.homologar_status("valor desconocido") == "SIN GESTIÓN"
 
 
-def test_homologacion_status_no_contesta():
-    homologador = HomologadorService()
-
-    resultado = homologador.homologar_status("NO CONTESTA")
-
-    assert resultado == "NO CONTACTO"
-
-
-def test_homologacion_tipificacion_promesa():
-    homologador = HomologadorService()
-
-    resultado = homologador.homologar_tipificacion("PDP")
-
-    assert resultado == "PROMESA DE PAGO"
-
-
-def test_homologacion_tipificacion_numero_incorrecto_con_acento():
-    homologador = HomologadorService()
-
-    resultado = homologador.homologar_tipificacion("NÚMERO INCORRECTO")
-
-    assert resultado == "NÚMERO INCORRECTO"
-
+def test_homologacion_tipificaciones_y_regla_configurable():
+    homologador = HomologadorService({"acuerdo especial": "ACUERDO"})
+    assert homologador.homologar_tipificacion("PDP") == "PROMESA DE PAGO"
+    assert homologador.homologar_tipificacion("numero incorrecto") == "NÚMERO INCORRECTO"
+    assert homologador.homologar_tipificacion("acuerdo especial") == "ACUERDO"

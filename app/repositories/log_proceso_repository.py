@@ -1,16 +1,30 @@
-from app.repositories.database import Database
+from app.repositories.database import DatabaseConnection
 
 
 class LogProcesoRepository:
-    def __init__(self, db: Database):
-        self.db = db
+    def __init__(self, target_db: DatabaseConnection):
+        self.target_db = target_db
 
-    def registrar(self, mensaje: str, nivel: str = "INFO", id_carga: int | None = None) -> None:
-        self.db.ejecutar(
+    def registrar(
+        self,
+        mensaje: str,
+        nivel: str = "INFO",
+        proceso: str = "GESTIONES",
+        id_control_descarga: int | None = None,
+        detalle_error: str | None = None,
+    ) -> None:
+        self.target_db.ejecutar(
             """
-            INSERT INTO logs_proceso (id_carga, nivel, mensaje)
-            VALUES (%s, %s, %s)
+            INSERT INTO logs_proceso (
+                proceso, nivel, mensaje, id_control_descarga, detalle_error
+            )
+            VALUES (%s, %s, %s, %s, %s)
             """,
-            (id_carga, nivel, mensaje),
+            (
+                proceso,
+                nivel,
+                mensaje,
+                id_control_descarga,
+                detalle_error,
+            ),
         )
-

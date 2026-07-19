@@ -1,22 +1,39 @@
 @startuml
-title Flujo automatizado con PostgreSQL/Supabase
+title Flujo automatizado de gestiones
 
 start
-:Cargar variables .env;
-:Conectar a PostgreSQL/Supabase;
-:Crear carga en cargas_gestiones\nestado INICIADO;
-:Obtener gestiones desde consulta SQL\no futuro Stored Procedure;
-:Limpiar DNI, telefono, textos,\nfechas y montos;
-:Homologar status y tipificacion;
-:Validar campos obligatorios;
-:Generar clave_unica;
+:CLI, Tkinter o job horario;
+:Cargar configuración desde .env;
+:Conectar base local destino;
+:Crear o seleccionar control PENDIENTE;
+:Validar fecha_hasta > fecha_desde;
+:Marcar EN_PROCESO;
+:Conectar servidor ESCALL origen;
+:Validar tabla y Stored Procedure;
+:CALL sp_descargar_gestiones_rango\ncon parámetros;
+:Limpiar DNI, teléfono, textos, fechas y montos;
+:Homologar status y tipificación;
+:Validar id, fecha, DNI y clasificaciones;
+:Generar SHA-256 de 64 caracteres;
 :Eliminar duplicados del lote;
-:Insertar en gestiones\nON CONFLICT DO NOTHING;
-:Actualizar cargas_gestiones\nestado FINALIZADO o ERROR;
-:Registrar eventos en logs_proceso;
-:Consultar vw_resumen_gestiones;
-:Mostrar resumen en consola;
+:INSERT IGNORE por lotes en base local;
+if (¿Ocurrió un error?) then (Sí)
+  :ROLLBACK local;
+  :Marcar control ERROR;
+  :Registrar log técnico;
+else (No)
+  :Actualizar contadores;
+  :Marcar FINALIZADO;
+  :COMMIT local;
+  :Consultar vistas locales;
+  :Generar HTML y Excel;
+  if (¿Se confirmó --enviar?) then (Sí)
+    :Enviar por SMTP;
+    :Registrar envío;
+  else (No)
+    :Conservar archivos generados;
+  endif
+endif
+:Cerrar ambas conexiones;
 stop
-
 @enduml
-

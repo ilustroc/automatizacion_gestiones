@@ -1,57 +1,48 @@
-# Codigo fuente
+# Código fuente
 
-## Estructura de carpetas
+## Estructura
 
-### app/models
+```text
+automatizacion_gestiones/
+├── app/
+│   ├── models/          dataclasses del dominio
+│   ├── repositories/    origen ESCALL y destino local
+│   ├── services/        procesamiento, diagnóstico, reportes y SMTP
+│   ├── ui/              ventana Tkinter
+│   └── utils/           texto y fechas
+├── data/
+│   ├── examples/        CSV histórico, no operativo
+│   └── output/          Excel opcional
+├── docs/
+│   ├── sql/             scripts de origen, esquema y vistas
+│   └── plantuml/        diagramas
+├── jobs/                descarga horaria y reportes
+├── tests/               mocks y fakes sin servicios reales
+├── run.py               punto de entrada
+├── requirements.txt     dependencias compatibles
+└── .env.example         plantilla sin secretos
+```
 
-Contiene clases del dominio. La clase principal es `Gestion`.
+## Archivos clave
 
-### app/services
+- `app/config.py`: valida dos bases, SMTP, destinatarios y opciones generales.
+- `app/repositories/database.py`: conexión reusable, context manager y transacciones.
+- `source_schema_repository.py`: diagnóstico de tabla, columnas, versión y SP.
+- `source_gestion_repository.py`: consultas de solo lectura a ESCALL.
+- `gestion_procesada_repository.py`: inserción local por lotes con `INSERT IGNORE`.
+- `procesador_gestiones_service.py`: coordina el caso de uso y el rollback.
+- `app/main.py`: argumentos, composición de dependencias y comandos.
+- `app/ui/descargas_view.py`: selección visual de fechas y horas.
 
-Contiene la logica del proceso:
+## Comandos de referencia
 
-- descarga desde base de datos
-- limpieza
-- homologacion
-- validacion
-- reportes
-- preparacion de notificaciones
+```powershell
+python run.py --modo diagnostico
+python run.py --modo manual --fecha-inicio 2026-07-01 --fecha-fin 2026-07-18
+python run.py --modo pendiente
+python run.py --interfaz
+python run.py --reporte todos --solo-generar
+python -m pytest -q
+```
 
-### app/repositories
-
-Contiene el acceso a PostgreSQL/Supabase:
-
-- conexion
-- empresas
-- usuarios
-- carteras
-- cargas
-- gestiones
-- reportes
-- envios
-- logs
-
-### app/utils
-
-Funciones reutilizables para texto, numeros y fechas.
-
-### docs
-
-Documentacion academica, tecnica y diagramas PlantUML.
-
-### tests
-
-Pruebas unitarias con pytest. Incluyen limpieza, homologacion, validacion, clave unica y simulacion de insercion en base de datos.
-
-### run.py
-
-Punto de entrada del sistema.
-
-### requirements.txt
-
-Dependencias del proyecto.
-
-### .env.example
-
-Plantilla de variables de entorno. No contiene credenciales reales.
-
+El SQL permanece en los repositorios; `app/main.py` solo coordina dependencias y casos de uso.

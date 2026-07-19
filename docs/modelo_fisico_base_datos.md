@@ -1,73 +1,42 @@
-# Modelo fisico de base de datos
+# Modelo físico de base de datos
 
-La base fisica esta implementada en PostgreSQL/Supabase dentro del schema `public`.
+## Origen ESCALL
 
-## Tablas
+- Motor: MySQL/MariaDB en cPanel.
+- Base: `escarperu_software`.
+- Tabla existente: `gestiones`.
+- Procedimiento de lectura: `sp_descargar_gestiones_rango`.
+- Script: `docs/sql/01_source_escall_sp.sql`.
 
-### empresas
+La aplicación verifica con `SHOW COLUMNS FROM gestiones` que existan `id`, `fecha_gestion`, `dni`, `telefono`, `status`, `tipificacion`, `observacion`, `fecha_pago`, `monto_pago`, `nombre`, `created_at` y `updated_at`. No ejecuta operaciones de escritura en este servidor.
 
-Registra empresas o clientes externos.
+## Destino local
 
-### usuarios
+- Motor: MySQL o MariaDB.
+- Base: `automatizacion_gestiones`.
+- Scripts: `docs/sql/02_target_local_schema.sql` y `03_target_local_views.sql`.
 
-Registra usuarios internos con roles como administrador, supervisor, analista o asesor.
+| Objeto | Propósito |
+|---|---|
+| `empresas` | Empresas relacionadas con carteras y usuarios |
+| `usuarios` | Usuarios o responsables locales |
+| `carteras` | Carteras de cobranza |
+| `control_descargas_gestiones` | Rango, estado, contadores y error de cada ejecución |
+| `cargas_gestiones` | Historial complementario de cargas |
+| `gestiones_procesadas` | Datos limpios y homologados provenientes de ESCALL |
+| `reportes` | Archivos y periodos generados |
+| `destinatarios_reportes` | Destinos configurables por tipo |
+| `envios_reportes` | Resultado de cada intento SMTP |
+| `logs_proceso` | Eventos INFO, ADVERTENCIA y ERROR |
 
-### carteras
+`gestiones_procesadas.clave_unica` es `CHAR(64)` y tiene índice único. Contiene el SHA-256 de los campos funcionales, evitando límites de longitud del índice y garantizando idempotencia.
 
-Agrupa carteras o campanas asociadas a una empresa.
+## Vistas
 
-### cargas_gestiones
+- `vw_control_descargas_pendientes`: controles por ejecutar.
+- `vw_alerta_promesas_pago`: promesas vencidas, de hoy, mañana y próximas.
+- `vw_reporte_impulse_gestiones`: detalle operativo local.
+- `vw_reporte_gerencia_asesores_dia`: indicadores por fecha y asesor.
+- `vw_ranking_gerencia_asesores_dia`: ranking cuando el motor admite funciones de ventana.
 
-Controla cada ejecucion del proceso. Guarda estado, periodo, origen, registros descargados, insertados y duplicados.
-
-### gestiones
-
-Tabla central del sistema. Guarda gestiones limpias y homologadas.
-
-Campos principales:
-
-- `id_gestion`
-- `id_carga`
-- `id_cartera`
-- `id_usuario`
-- `fecha_gestion`
-- `dni`
-- `telefono`
-- `status`
-- `tipificacion`
-- `observacion`
-- `fecha_pago`
-- `monto_pago`
-- `nombre`
-- `clave_unica`
-- `creado_en`
-
-### reportes
-
-Registra reportes generados por tipo y periodo.
-
-### destinatarios_reportes
-
-Guarda destinatarios que recibiran reportes.
-
-### envios_reportes
-
-Registra intentos de envio, estado y errores.
-
-### logs_proceso
-
-Guarda eventos y errores asociados a una carga.
-
-### vw_resumen_gestiones
-
-Vista que resume gestiones por fecha, status y tipificacion. Es la fuente principal del reporte en consola.
-
-## Relaciones principales
-
-- `empresas` se relaciona con `carteras`.
-- `carteras` se relaciona con `gestiones`.
-- `usuarios` se relaciona con `gestiones`.
-- `cargas_gestiones` se relaciona con `gestiones` y `logs_proceso`.
-- `reportes` se relaciona con `envios_reportes`.
-- `destinatarios_reportes` se relaciona con `envios_reportes`.
-
+Las relaciones usan InnoDB y claves foráneas locales. No existe una clave foránea entre servidores; `id_gestion_origen` conserva la trazabilidad hacia ESCALL.

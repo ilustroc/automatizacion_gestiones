@@ -1,40 +1,25 @@
-# Requisitos del proyecto
+# Requisitos del proyecto final
 
-## Requisitos funcionales
+## Funcionales
 
-1. Conectar a PostgreSQL/Supabase usando variables de entorno.
-2. Crear una ejecucion en `cargas_gestiones`.
-3. Obtener gestiones desde una consulta SQL o futuro Stored Procedure.
-4. Limpiar DNI, telefono, observacion, nombre, fechas y montos.
-5. Homologar status y tipificacion.
-6. Validar campos obligatorios.
-7. Generar `clave_unica`.
-8. Eliminar duplicados del lote.
-9. Insertar gestiones no duplicadas en `gestiones`.
-10. Actualizar la ejecucion con registros descargados, insertados y duplicados.
-11. Registrar eventos en `logs_proceso`.
-12. Consultar `vw_resumen_gestiones`.
-13. Mostrar resumen en consola.
+1. Mantener conexiones independientes a ESCALL y MySQL/MariaDB local.
+2. Diagnosticar tabla, columnas, SP, versiones y estructuras sin modificar datos.
+3. Descargar mediante `sp_descargar_gestiones_rango` con fechas parametrizadas.
+4. Limpiar, homologar, validar y generar SHA-256.
+5. Insertar por lotes y evitar duplicados.
+6. Administrar controles manuales, pendientes y automáticos.
+7. Ejecutar la última hora cerrada de forma idempotente.
+8. Generar reportes para supervisor, Impulse y gerencia desde la base local.
+9. Exportar Excel, enviar HTML/adjuntos y registrar intentos.
+10. Ofrecer CLI, Tkinter y jobs programables.
 
-## Requisitos no funcionales
+## No funcionales
 
-1. Usar Python 3.11 o superior.
-2. Mantener codigo simple y entendible.
-3. Separar responsabilidades por capas.
-4. Evitar patrones avanzados innecesarios.
-5. Documentar el proyecto para GitHub y exposicion academica.
-6. Proteger credenciales mediante variables de entorno.
-7. Ejecutar pruebas unitarias sin depender de Supabase real.
-
-## Alcance actual
-
-La version actual trabaja con PostgreSQL/Supabase como flujo principal. El CSV queda solo como respaldo academico o ejemplo.
-
-## Fuera de alcance en esta etapa
-
-- Interfaz grafica.
-- Envio real de correos.
-- Automatizacion programada por calendario.
-- Stored Procedure real obligatorio.
-- Dashboard web.
-
+1. Python 3.11+, incluido 3.13.
+2. MySQL/MariaDB y cPanel/phpMyAdmin.
+3. Credenciales únicamente en `.env`, contraseñas entre comillas dobles.
+4. Consultas parametrizadas y privilegios mínimos en ESCALL.
+5. Transacciones y rollback local.
+6. POO y arquitectura por capas.
+7. Pruebas sin conexiones o correos reales.
+8. CSV no operativo, conservado solo como ejemplo.
